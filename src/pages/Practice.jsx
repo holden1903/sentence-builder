@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useAuth } from "../context/AuthContext";
 import confetti from "canvas-confetti";
-import TextToSpeechButton from "../components/TextToSpeechButton";
+import RandomQuote from "../components/RandomQuote";
 
 
 // Updated sentence data with 4 levels and multiple grammar topics, variable sentence lengths
@@ -80,6 +81,7 @@ export default function Practice() {
   const [status, setStatus] = useState(Array(correctWords.length).fill(null));
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState(() => parseInt(localStorage.getItem("score")) || 0);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     setAvailable(shuffle(initialWords));
@@ -108,7 +110,9 @@ export default function Practice() {
     const joined = arr.join(" ");
     if (joined === correct) {
       setFeedback("✅ Correct! Great Job!");
-      setScore(prev => prev + 10);
+      const newScore = score + 10;
+      setScore(newScore);
+      if (currentUser) saveScore(currentUser.uid, newScore);
       confetti({ particleCount: 80, spread: 50 });
     } else if (arr.length === correctWords.length) {
       setFeedback("❌ Try again.");
@@ -148,7 +152,6 @@ export default function Practice() {
                 borderRadius: '0.375rem', cursor: 'pointer'
               }}>
                 <span onClick={() => addWord(w)} style={{ flex: 1 }}>{w}</span>
-                <TextToSpeechButton text={w} />
               </span>
             ))}
           </div>
@@ -179,7 +182,7 @@ export default function Practice() {
           {feedback && <p style={{ textAlign: 'center', marginTop: '1rem' }}>{feedback}</p>}
         </div>
       </div>
-      <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(0,0,0,0.05)', borderRadius: '0.375rem', textAlign: 'center' }}>Advertisement<br/>Your Ad Here</div>
+      <RandomQuote />
     </div>
   );
 }
