@@ -1,3 +1,3 @@
 # Sentence Builder
 
-Mockup-aligned landing and practice pages with filters, shuffle, ads, and click-to-add functionality.
+Updated practice page with remove-on-click, auto-next, and instructions for adding content.
