@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { recordHistory } from "../utils/firestore";
-import Mascot from "../components/Mascot"; from "../utils/firestore";
+import Mascot from "../components/Mascot";
 import confetti from "canvas-confetti";
 import RandomQuote from "../components/RandomQuote";
 
