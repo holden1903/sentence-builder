@@ -1,2 +1,1 @@
-# Sentence Builder App
-React ile hazırlanmış interaktif cümle kurma uygulaması.
+# Sentence Builder App with Landing Page and Router
