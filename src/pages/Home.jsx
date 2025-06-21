@@ -37,6 +37,10 @@ export default function Home() {
               Start Practicing →
             </button>
           </Link>
+        <div style={{ marginTop: "1rem" }}>
+          <Link to="/signup" style={{ marginRight: "1rem", color:"#fff" }}>Sign Up</Link>
+          <Link to="/login" style={{ color:"#fff" }}>Log In</Link>
+        </div>
         </div>
         <div style={{
           padding: '1rem',
