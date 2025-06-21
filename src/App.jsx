@@ -12,21 +12,22 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/builder" element={<Practice />} />
-        <Route path="/admin" element={
-        <Route path="/dashboard" element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        } />
-        <Route path="/dashboard" element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        } />
-          <PrivateRoute>
-            <AdminPanel />
-          </PrivateRoute>
-        } />
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <AdminPanel />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
