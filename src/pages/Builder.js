@@ -45,7 +45,7 @@ function DropGrid({ sentence, statusArray }) {
         );
       })}
     </div>
-);
+  );
 }
 
 export default function Builder() {
@@ -133,7 +133,7 @@ export default function Builder() {
               Reset
             </button>
           </div>
-          {feedback && <p style={{ textAlign: 'center', fontSize: '1.125rem', fontWeight: '600', marginTop: '1rem' }}>{feedback}</p>}
+          {feedback && <p style={{ textAlign: 'center', color: '#111827', fontSize: '1.125rem', fontWeight: '600', marginTop: '1rem' }}>{feedback}</p>}
         </div>
 
         <div style={{ gridColumn: 'span 3', backgroundColor: '#F9FAFB', padding: '1rem', borderRadius: '0.375rem' }}>
@@ -152,4 +152,5 @@ export default function Builder() {
         <p style={{ textAlign: 'center', color: '#10B981', fontSize: '1rem', marginTop: '1.5rem' }}>{translation}</p>
       )}
     </div>
-);
+  );
+}
