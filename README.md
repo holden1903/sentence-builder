@@ -1,2 +1,3 @@
 # Sentence Builder
-Interactive sentence building app reflecting provided mockups.
+
+A React application with a mockup-aligned landing page and functional practice page.

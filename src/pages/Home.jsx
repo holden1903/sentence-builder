@@ -11,7 +11,7 @@ export default function Home() {
       background: 'linear-gradient(135deg, #3b82f6, #10b981)'
     }}>
       <div style={{
-        maxWidth: 1024,
+        maxWidth: '1024px',
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: '2rem',
@@ -38,7 +38,11 @@ export default function Home() {
             </button>
           </Link>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
           <div style={{
             width: '300px',
             height: '600px',
