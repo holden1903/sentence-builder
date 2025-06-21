@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 
@@ -16,31 +17,6 @@ const sentenceSets = {
     words: ["We", "will", "travel", "to", "Istanbul", "tomorrow"],
     correct: "We will travel to Istanbul tomorrow.",
     translation: "Yarın İstanbul'a seyahat edeceğiz."
-  },
-  "Food (Present Simple)": {
-    words: ["I", "eat", "an", "apple", "every", "morning"],
-    correct: "I eat an apple every morning.",
-    translation: "Her sabah elma yerim."
-  },
-  "School (Present Simple)": {
-    words: ["He", "studies", "English", "at", "school"],
-    correct: "He studies English at school.",
-    translation: "O okulda İngilizce çalışır."
-  },
-  "Travel (Future Simple)": {
-    words: ["They", "will", "fly", "to", "London", "next", "week"],
-    correct: "They will fly to London next week.",
-    translation: "Gelecek hafta Londra'ya uçacaklar."
-  },
-  "Free Time (Past Simple)": {
-    words: ["We", "played", "football", "after", "school"],
-    correct: "We played football after school.",
-    translation: "Okuldan sonra futbol oynadık."
-  },
-  "Weather (Present Simple)": {
-    words: ["It", "rains", "a", "lot", "in", "November"],
-    correct: "It rains a lot in November.",
-    translation: "Kasım’da çok yağmur yağar."
   }
 };
 
@@ -63,7 +39,7 @@ function DraggableWord({ word, id }) {
   );
 }
 
-function DropZone({ sentence }) {
+function DropZone({ sentence, correctArray }) {
   const { isOver, setNodeRef } = useDroppable({ id: "dropzone" });
   const style = isOver ? "bg-green-100" : "bg-gray-100";
 
@@ -74,14 +50,23 @@ function DropZone({ sentence }) {
     >
       <p className="text-gray-600 text-sm sm:text-base">Drop words here:</p>
       <div className="flex flex-wrap gap-2 mt-2">
-        {sentence.map((word, idx) => (
-          <div
-            key={idx}
-            className="bg-green-200 border rounded px-3 py-2 text-sm sm:text-base"
-          >
-            {word}
-          </div>
-        ))}
+        {sentence.map((word, idx) => {
+          const correctness = correctArray[idx];
+          const bgColor =
+            correctness === true
+              ? "bg-green-200 border-green-600"
+              : correctness === false
+              ? "bg-red-200 border-red-600"
+              : "bg-gray-200 border-gray-400";
+          return (
+            <div
+              key={idx}
+              className={`border rounded px-3 py-2 text-sm sm:text-base ${bgColor}`}
+            >
+              {word}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -92,48 +77,44 @@ export default function Builder() {
   const [selectedTopic, setSelectedTopic] = useState(topicOptions[0]);
   const [sentence, setSentence] = useState([]);
   const [feedback, setFeedback] = useState("");
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [correctArray, setCorrectArray] = useState([]);
   const [score, setScore] = useState(() => parseInt(localStorage.getItem("sentenceScore")) || 0);
-  const [correctCount, setCorrectCount] = useState(() => parseInt(localStorage.getItem("correctCount")) || 0);
-  const [wrongCount, setWrongCount] = useState(() => parseInt(localStorage.getItem("wrongCount")) || 0);
-  const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem("sentenceHistory")) || []);
 
   const { words, correct, translation } = sentenceSets[selectedTopic];
+  const correctWords = correct.split(" ");
 
   useEffect(() => {
     localStorage.setItem("sentenceScore", score);
-    localStorage.setItem("correctCount", correctCount);
-    localStorage.setItem("wrongCount", wrongCount);
-    localStorage.setItem("sentenceHistory", JSON.stringify(history));
-  }, [score, correctCount, wrongCount, history]);
+  }, [score]);
 
   function handleDragEnd(event) {
     const { active, over } = event;
     if (over && over.id === "dropzone" && !sentence.includes(active.id)) {
       const newSentence = [...sentence, active.id];
       setSentence(newSentence);
-      validateSentence(newSentence);
+      validateLive(newSentence);
     }
   }
 
-  function validateSentence(current) {
-    const userSentence = current.join(" ");
-    const isCorrect = userSentence === correct;
-    if (isCorrect) {
+  function validateLive(current) {
+    const newFeedbackArray = current.map((word, idx) => word === correctWords[idx]);
+    setCorrectArray(newFeedbackArray);
+
+    const joined = current.join(" ");
+    if (joined === correct) {
       setFeedback("✅ Correct!");
       setScore(prev => prev + 10);
-      setCorrectCount(prev => prev + 1);
-    } else {
+    } else if (joined.length >= correct.length) {
       setFeedback("❌ Try again.");
-      setWrongCount(prev => prev + 1);
+    } else {
+      setFeedback("");
     }
-    setHistory(prev => [...prev, { sentence: userSentence, correct: isCorrect }]);
   }
 
   function resetSentence() {
     setSentence([]);
+    setCorrectArray([]);
     setFeedback("");
-    setShowAnswer(false);
   }
 
   function handleTopicChange(e) {
@@ -146,7 +127,7 @@ export default function Builder() {
       <h1 className="text-lg sm:text-xl font-bold mb-4">Build the Sentence</h1>
 
       <div className="mb-2 text-right text-sm text-gray-600">
-        🎯 Score: <span className="font-bold text-green-700">{score}</span> | ✅ {correctCount} | ❌ {wrongCount}
+        🎯 Score: <span className="font-bold text-green-700">{score}</span>
       </div>
 
       <div className="mb-4">
@@ -165,7 +146,7 @@ export default function Builder() {
       </div>
 
       <DndContext onDragEnd={handleDragEnd}>
-        <DropZone sentence={sentence} />
+        <DropZone sentence={sentence} correctArray={correctArray} />
         <div className="flex flex-wrap gap-2 border p-4 rounded">
           {words.map((word, index) => (
             <DraggableWord key={index} word={word} id={word} />
@@ -192,29 +173,6 @@ export default function Builder() {
         >
           🔄 Reset
         </button>
-        <button
-          onClick={() => setShowAnswer(true)}
-          className="bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-800 text-sm sm:text-base"
-        >
-          💡 Show Answer
-        </button>
-      </div>
-
-      {showAnswer && (
-        <p className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 p-3 text-sm sm:text-base">
-          ✅ Correct Sentence: <span className="font-semibold">{correct}</span>
-        </p>
-      )}
-
-      <div className="mt-6">
-        <h2 className="font-semibold text-base mb-2">📜 Your Sentence History</h2>
-        <ul className="text-sm list-disc pl-5 space-y-1">
-          {history.slice(-5).reverse().map((entry, idx) => (
-            <li key={idx} className={entry.correct ? "text-green-700" : "text-red-500"}>
-              {entry.sentence} {entry.correct ? "✔️" : "❌"}
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
