@@ -157,7 +157,7 @@ export default function Practice() {
           <h2>Sentence</h2>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: \`repeat(\${correctWords.length},1fr)\`,
+            gridTemplateColumns: `repeat(\${correctWords.length},1fr)`,
             gap: '0.5rem',
             padding: '1rem',
             background: '#fff',
