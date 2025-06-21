@@ -14,34 +14,21 @@ function DraggableWord({ word, onClick }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: word });
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : {};
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      onClick={() => onClick(word)}
-      className="bg-blue-100 border border-blue-300 rounded px-4 py-2 m-1 cursor-pointer hover:bg-blue-200 text-center"
-    >
+    <div ref={setNodeRef} style={{...style, background:'#DBEAFE', border:'1px solid #BFDBFE', borderRadius:'0.375rem', padding:'0.5rem 0.75rem', margin:'0.25rem', cursor:'pointer', textAlign:'center'}} {...listeners} {...attributes} onClick={()=>onClick(word)}>
       {word}
     </div>
   );
 }
 
-function DropGrid({ sentence, statusArray }) {
+function DropGrid({ sentence, status }) {
   return (
-    <div className="grid grid-cols-6 gap-3 p-4 bg-white rounded shadow-inner">
-      {statusArray.map((st, idx) => {
-        const word = sentence[idx] || "";
-        const base = "h-14 flex items-center justify-center border rounded text-base";
-        const style = st === true
-          ? "bg-green-200 border-green-600"
-          : st === false
-          ? "bg-red-200 border-red-600"
-          : "bg-gray-100 border-gray-300";
-        const icon = st === true ? "✔️" : st === false ? "❌" : null;
-        return (
-          <div key={idx} className={`${base} ${style}`}>{word}{icon && <span className="ml-2">{icon}</span>}</div>
-        );
+    <div style={{display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:8, padding:16, background:'#fff', borderRadius:6, boxShadow:'inset 0 2px 4px rgba(0,0,0,0.05)'}}>
+      {status.map((st, i) => {
+        const w = sentence[i] || '';
+        const base={height:48, display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid #D1D5DB', borderRadius:6, fontSize:16};
+        const style = st===true ? {...base, background:'#DCFCE7', borderColor:'#34D399'} : st===false ? {...base, background:'#FEE2E2', borderColor:'#FECACA'} : base;
+        const icon = st===true?'✔️':st===false?'❌':'';
+        return <div key={i} style={style}>{w}{icon}</div>;
       })}
     </div>
   );
@@ -49,109 +36,81 @@ function DropGrid({ sentence, statusArray }) {
 
 export default function Builder() {
   const topic = Object.keys(sentenceSets)[0];
-  const { words: initialWords, correct, translation } = sentenceSets[topic];
-  const correctWords = correct.split(" ");
+  const { words, correct, translation } = sentenceSets[topic];
+  const correctWords = correct.split(' ');
 
-  const [availableWords, setAvailableWords] = useState([...initialWords]);
+  const [available, setAvailable] = useState([...words]);
   const [sentence, setSentence] = useState([]);
-  const [statusArray, setStatusArray] = useState(Array(correctWords.length).fill(null));
-  const [feedback, setFeedback] = useState("");
-  const [score, setScore] = useState(() => parseInt(localStorage.getItem("score")) || 0);
+  const [status, setStatus] = useState(Array(correctWords.length).fill(null));
+  const [feedback, setFeedback] = useState('');
+  const [score, setScore] = useState(()=>parseInt(localStorage.getItem('score'))||0);
 
-  useEffect(() => { localStorage.setItem("score", score); }, [score]);
+  useEffect(()=>{ localStorage.setItem('score', score); }, [score]);
 
-  function addWord(word) {
-    if (sentence.length < correctWords.length && availableWords.includes(word)) {
-      const newSentence = [...sentence, word];
-      setSentence(newSentence);
-      setAvailableWords(prev => prev.filter(w => w !== word));
-      validateLive(newSentence);
+  function addWord(w) {
+    if(sentence.length<correctWords.length && available.includes(w)) {
+      const newSent=[...sentence, w];
+      setSentence(newSent);
+      setAvailable(prev=>prev.filter(x=>x!==w));
+      validate(newSent);
     }
   }
 
-  function handleDragEnd(event) {
-    const { active, over } = event;
-    if (over && over.id === "dropzone") {
-      addWord(active.id);
-    }
+  function handleDragEnd(e) {
+    const {active, over} = e;
+    if(over && over.id==='dropzone') addWord(active.id);
   }
 
-  function validateLive(arr) {
-    const st = arr.map((w, i) => w === correctWords[i]);
-    setStatusArray([...st, ...Array(correctWords.length - st.length).fill(null)]);
-    if (arr.join(" ") === correct) {
-      setFeedback("✅ Correct! Great Job!");
-      setScore(prev => prev + 10);
-      confetti({ particleCount: 80, spread: 50 });
-    } else if (arr.length === correctWords.length) {
-      setFeedback("❌ Try again.");
-    } else {
-      setFeedback("");
-    }
+  function validate(arr) {
+    const st = arr.map((w,i)=>w===correctWords[i]);
+    setStatus([...st, ...Array(correctWords.length-st.length).fill(null)]);
+    if(arr.join(' ')===correct) {
+      setFeedback('✅ Correct! Great Job!');
+      setScore(prev=>prev+10);
+      confetti({particleCount:80, spread:50});
+    } else if(arr.length===correctWords.length) {
+      setFeedback('❌ Try again.');
+    } else setFeedback('');
   }
 
-  function resetAll() {
+  function reset() {
     setSentence([]);
-    setAvailableWords([...initialWords]);
-    setStatusArray(Array(correctWords.length).fill(null));
-    setFeedback("");
+    setAvailable([...words]);
+    setStatus(Array(correctWords.length).fill(null));
+    setFeedback('');
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 font-sans">
-      <div className="flex justify-between items-center mb-4">
-        <img src="/logo.svg" alt="Logo" className="h-8" />
-        <div className="text-right text-sm text-gray-600">
-          🎯 Score: <span className="font-bold text-green-700">{score}</span>
-        </div>
+    <div style={{maxWidth:1024, margin:'0 auto', padding:24}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16}}>
+        <img src="/logo.svg" alt="Logo" style={{height:32}} />
+        <div>🎯 Score: <strong style={{color:'#10B981'}}>{score}</strong></div>
       </div>
-      <h1 className="text-2xl font-bold mb-4 text-center">Build the Sentence</h1>
-      <ol className="list-decimal list-inside mb-6 text-lg text-center">
-        <li>Use drag or click to fill the boxes</li>
-        <li>Words appear in numbered boxes</li>
-        <li>Check or Reset</li>
+      <h1 style={{fontSize:24, fontWeight:'bold', textAlign:'center', marginBottom:16}}>Build the Sentence</h1>
+      <ol style={{listStyle:'decimal inside', textAlign:'center', marginBottom:24}}>
+        <li>Click or drag words to fill boxes</li>
+        <li>Boxes numbered left to right</li>
+        <li>Reset or Check as needed</li>
       </ol>
-
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-3 p-4 bg-gray-50 rounded-lg">
-          <h2 className="font-semibold mb-2">Instructions</h2>
-          <ul className="list-disc list-inside text-sm">
-            <li>Click or drag words</li>
-            <li>Fill the empty boxes</li>
-            <li>Press Check or Reset</li>
-          </ul>
-        </div>
-
-        <div className="col-span-6 p-4 bg-gray-50 rounded-lg">
-          <DropGrid sentence={sentence} statusArray={statusArray} />
-          <div className="mt-4 flex gap-4 justify-center">
-            <button onClick={() => validateLive(sentence)}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-              Check Sentence
-            </button>
-            <button onClick={resetAll}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-              Reset
-            </button>
-          </div>
-          {feedback && <p className="mt-4 text-lg font-bold text-center">{feedback}</p>}
-        </div>
-
-        <div className="col-span-3 p-4 bg-gray-50 rounded-lg">
-          <h2 className="font-semibold mb-2">Word Bank</h2>
-          <div id="dropzone" className="p-2 bg-white rounded border-dashed border-2 border-gray-300 min-h-[8rem]">
+      <div style={{display:'grid', gridTemplateColumns:'1fr 2fr 1fr', gap:16}}>
+        <div>
+          <h2>Word Bank</h2>
+          <div id="dropzone" style={{minHeight:200, padding:8, background:'#fff', border:'2px dashed #D1D5DB', borderRadius:6}}>
             <DndContext onDragEnd={handleDragEnd}>
-              {availableWords.map((w, i) => (
-                <DraggableWord key={i} word={w} onClick={addWord} />
-              ))}
+              {available.map((w,i)=><DraggableWord key={i} word={w} onClick={addWord} />)}
             </DndContext>
           </div>
         </div>
+        <div>
+          <DropGrid sentence={sentence} status={status} />
+          <div style={{marginTop:16, textAlign:'center'}}>
+            <button onClick={()=>validate(sentence)} style={{marginRight:8,padding:'8px 16px',background:'#2563EB',color:'#fff',border:'none',borderRadius:6}}>Check Sentence</button>
+            <button onClick={reset} style={{padding:'8px 16px',background:'#DC2626',color:'#fff',border:'none',borderRadius:6}}>Reset</button>
+          </div>
+          {feedback && <p style={{textAlign:'center',marginTop:16}}>{feedback}</p>}
+        </div>
       </div>
-
-      {feedback === "✅ Correct! Great Job!" && (
-        <p className="mt-6 text-center text-green-700 text-lg">{translation}</p>
-      )}
+      {feedback==='✅ Correct! Great Job!' && <p style={{textAlign:'center',color:'#10B981',marginTop:16}}>{translation}</p>}
     </div>
   );
 }
