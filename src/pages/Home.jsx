@@ -39,17 +39,14 @@ export default function Home() {
           </Link>
         </div>
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          padding: '1rem',
+          background: 'rgba(255,255,255,0.8)',
+          borderRadius: '0.5rem',
+          textAlign: 'center',
+          fontSize: '1rem',
+          color: '#333'
         }}>
-          <div style={{
-            width: '300px',
-            height: '600px',
-            background: '#e5e7eb',
-            borderRadius: '1rem',
-            boxShadow: '0 10px 15px rgba(0,0,0,0.1)'
-          }} />
+          Advertisement<br/>Your Ad Here
         </div>
       </div>
     </div>

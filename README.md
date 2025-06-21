@@ -1,3 +1,3 @@
 # Sentence Builder
 
-A React application with a mockup-aligned landing page and functional practice page.
+Mockup-aligned landing and practice pages with filters, shuffle, ads, and click-to-add functionality.
