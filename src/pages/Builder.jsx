@@ -155,4 +155,5 @@ export default function Builder() {
         <p className="mt-6 text-green-700 text-lg">📘 {translation}</p>
       )}
     </div>
-);
+    );
+    }
