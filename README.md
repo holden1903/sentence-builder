@@ -1,3 +1,2 @@
 # Sentence Builder
-
-Interactive sentence building app with drag-and-drop, real-time feedback, scoring, and admin-managed content.
+Interactive sentence building app with modern UI, click-or-drag input, scoring, and confetti.

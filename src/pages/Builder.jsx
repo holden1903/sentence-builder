@@ -7,48 +7,41 @@ const sentenceSets = {
     words: ["I", "wake", "up", "at", "7", "a.m."],
     correct: "I wake up at 7 a.m.",
     translation: "Ben saat 7'de uyanırım."
-  },
-  "Yesterday (Past Simple)": {
-    words: ["She", "went", "to", "the", "park", "yesterday"],
-    correct: "She went to the park yesterday.",
-    translation: "O dün parka gitti."
-  },
-  "Tomorrow (Future)": {
-    words: ["We", "will", "travel", "to", "Istanbul", "tomorrow"],
-    correct: "We will travel to Istanbul tomorrow.",
-    translation: "Yarın İstanbul'a seyahat edeceğiz."
   }
 };
 
-function DraggableWord({ word, id }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
-  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined;
+function DraggableWord({ word, onClick }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: word });
+  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : {};
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}
-      className="bg-blue-100 border border-blue-400 rounded px-4 py-2 m-1 cursor-pointer text-sm sm:text-base">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={() => onClick(word)}
+      className="bg-blue-100 border border-blue-400 rounded px-3 py-2 m-1 cursor-pointer text-sm sm:text-base hover:bg-blue-200"
+    >
       {word}
     </div>
   );
 }
 
-function DropZone({ sentence, correctArray }) {
-  const { setNodeRef } = useDroppable({ id: "dropzone" });
+function DropGrid({ sentence, statusArray }) {
   return (
-    <div ref={setNodeRef}
-      className="grid grid-cols-6 gap-2 mb-4 p-4 border-2 border-dashed border-gray-400 rounded bg-white">
-      {Array.from({ length: correctArray.length }).map((_, idx) => {
+    <div className="grid grid-cols-6 gap-2 mb-4 p-2 bg-white rounded">
+      {statusArray.map((st, idx) => {
         const word = sentence[idx] || "";
-        const status = correctArray[idx];
         const base = "h-12 flex items-center justify-center border rounded text-sm sm:text-base";
-        const style = status === true
+        const style = st === true
           ? "bg-green-200 border-green-600"
-          : status === false
+          : st === false
           ? "bg-red-200 border-red-600"
           : "bg-gray-100 border-gray-300";
-        const icon = status === true ? "✔️" : status === false ? "❌" : "";
+        const icon = st === true ? "✔️" : st === false ? "❌" : "";
         return (
           <div key={idx} className={`${base} ${style}`}>
-            {word} <span className="ml-1">{icon}</span>
+            {word} <span>{icon}</span>
           </div>
         );
       })}
@@ -57,89 +50,109 @@ function DropZone({ sentence, correctArray }) {
 }
 
 export default function Builder() {
-  const topicOptions = Object.keys(sentenceSets);
-  const [selectedTopic, setSelectedTopic] = useState(topicOptions[0]);
-  const [sentence, setSentence] = useState([]);
-  const [feedback, setFeedback] = useState("");
-  const [correctArray, setCorrectArray] = useState([]);
-  const [score, setScore] = useState(() => parseInt(localStorage.getItem("sentenceScore")) || 0);
-
-  const { words, correct, translation } = sentenceSets[selectedTopic];
+  const topic = Object.keys(sentenceSets)[0];
+  const { words: initialWords, correct, translation } = sentenceSets[topic];
   const correctWords = correct.split(" ");
 
-  useEffect(() => {
-    localStorage.setItem("sentenceScore", score);
-  }, [score]);
+  const [availableWords, setAvailableWords] = useState([...initialWords]);
+  const [sentence, setSentence] = useState([]);
+  const [statusArray, setStatusArray] = useState(Array(correctWords.length).fill(null));
+  const [feedback, setFeedback] = useState("");
+  const [score, setScore] = useState(() => parseInt(localStorage.getItem("score")) || 0);
 
-  function handleDragEnd(event) {
-    const { active, over } = event;
-    if (over && over.id === "dropzone" && sentence.length < correctWords.length) {
-      setSentence(prev => {
-        const newSentence = [...prev, active.id];
-        validateLive(newSentence);
-        return newSentence;
-      });
+  useEffect(() => { localStorage.setItem("score", score); }, [score]);
+
+  function addWord(word) {
+    if (sentence.length < correctWords.length && availableWords.includes(word)) {
+      const newSentence = [...sentence, word];
+      setSentence(newSentence);
+      setAvailableWords(prev => prev.filter(w => w !== word));
+      validateLive(newSentence);
     }
   }
 
-  function validateLive(current) {
-    const statusArr = current.map((w, i) => w === correctWords[i]);
-    setCorrectArray(statusArr);
-    if (current.join(" ") === correct) {
+  function handleDragEnd(event) {
+    const { active, over } = event;
+    if (over && over.id === "dropzone") {
+      addWord(active.id);
+    }
+  }
+
+  function validateLive(arr) {
+    const st = arr.map((w, i) => w === correctWords[i]);
+    setStatusArray([...st, ...Array(correctWords.length - st.length).fill(null)]);
+    if (arr.join(" ") === correct) {
       setFeedback("✅ Correct! Great Job!");
       setScore(prev => prev + 10);
-      confetti({ particleCount: 100, spread: 70 });
-    } else if (current.length === correctWords.length) {
+      confetti({ particleCount: 80, spread: 50 });
+    } else if (arr.length === correctWords.length) {
       setFeedback("❌ Try again.");
     } else {
       setFeedback("");
     }
   }
 
-  function resetSentence() {
+  function resetAll() {
     setSentence([]);
-    setCorrectArray([]);
+    setAvailableWords([...initialWords]);
+    setStatusArray(Array(correctWords.length).fill(null));
     setFeedback("");
   }
 
-  function handleTopicChange(e) {
-    setSelectedTopic(e.target.value);
-    resetSentence();
-  }
-
   return (
-    <div className="max-w-xl mx-auto p-6 font-sans">
+    <div className="max-w-4xl mx-auto p-6 font-sans">
       <div className="flex justify-between items-center mb-4">
         <img src="/logo.svg" alt="Logo" className="h-8" />
         <div className="text-right text-sm text-gray-600">
           🎯 Score: <span className="font-bold text-green-700">{score}</span>
         </div>
       </div>
-      <h1 className="text-xl font-bold mb-4">Build the Sentence</h1>
-      <div className="mb-4">
-        <label className="block mb-1 font-medium">Choose a topic:</label>
-        <select value={selectedTopic} onChange={handleTopicChange}
-          className="border rounded p-2 w-full text-sm sm:text-base">
-          {topicOptions.map(topic => (
-            <option key={topic} value={topic}>{topic}</option>
-          ))}
-        </select>
-      </div>
-      <DndContext onDragEnd={handleDragEnd}>
-        <DropZone sentence={sentence} correctArray={correctWords.map((_, i) => correctArray[i] ?? null)} />
-        <div className="flex flex-wrap gap-2 p-4 bg-gray-100 rounded">
-          {words.map((word, idx) => (
-            <DraggableWord key={idx} word={word} id={word} />
-          ))}
+      <h1 className="text-2xl font-bold mb-4">Build the Sentence</h1>
+      <ol className="list-decimal list-inside mb-6 text-lg">
+        <li>Use drag or click to fill the boxes</li>
+        <li>Words appear in numbered boxes</li>
+        <li>Check or Reset</li>
+      </ol>
+
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-3 p-4 bg-gray-50 rounded-lg">
+          <h2 className="font-semibold mb-2">Instructions</h2>
+          <ul className="list-disc list-inside text-sm">
+            <li>Click or drag words</li>
+            <li>Fill the empty boxes</li>
+            <li>Press Check or Reset</li>
+          </ul>
         </div>
-      </DndContext>
-      {feedback && <p className="mt-4 text-lg font-bold">{feedback}</p>}
-      <div className="mt-4">
-        <button onClick={resetSentence}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-          🔄 Reset
-        </button>
+
+        <div className="col-span-6 p-4 bg-gray-50 rounded-lg">
+          <DropGrid sentence={sentence} statusArray={statusArray} />
+          <div className="mt-4 flex gap-4">
+            <button onClick={() => validateLive(sentence)}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Check Sentence
+            </button>
+            <button onClick={resetAll}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+              Reset
+            </button>
+          </div>
+          {feedback && <p className="mt-4 text-lg font-bold">{feedback}</p>}
+        </div>
+
+        <div className="col-span-3 p-4 bg-gray-50 rounded-lg">
+          <h2 className="font-semibold mb-2">Word Bank</h2>
+          <div id="dropzone" className="p-2 border-dashed border-2 border-gray-300 rounded min-h-[8rem]">
+            <DndContext onDragEnd={handleDragEnd}>
+              {availableWords.map((w, i) => (
+                <DraggableWord key={i} word={w} onClick={addWord} />
+              ))}
+            </DndContext>
+          </div>
+        </div>
       </div>
+
+      {feedback === "✅ Correct! Great Job!" && (
+        <p className="mt-6 text-green-700 text-lg">📘 {translation}</p>
+      )}
     </div>
 );
-}
